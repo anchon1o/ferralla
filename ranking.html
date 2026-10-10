@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="gl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ferralla! · Ranking</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2A1E5C;--bg:#4B33C9;--sun:#FFD23F;--paper:#fff;--soft:#F1F2F8;--mute:#6b6290}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:'Baloo 2',system-ui,sans-serif;color:var(--ink);background:var(--bg);
+  background-image:radial-gradient(rgba(255,255,255,.12) 2px,transparent 2.5px);background-size:22px 22px;
+  display:flex;flex-direction:column;padding:10px;gap:8px;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto}
+.logo{font-weight:800;font-size:clamp(24px,8vw,34px);color:var(--sun);line-height:1;
+  -webkit-text-stroke:5px var(--ink);paint-order:stroke fill;text-shadow:0 4px 0 var(--ink);letter-spacing:.5px}
+.sub{color:#fff;font-weight:800;font-size:13px;opacity:.9;text-align:right;line-height:1.15}
+.tabs{display:flex;gap:6px;flex:0 0 auto}
+.tabs button{flex:1;font:inherit;font-weight:800;font-size:15px;border:3px solid var(--ink);border-radius:12px;background:#fff;color:var(--ink);
+  padding:4px 6px;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
+.tabs button[aria-selected="true"]{background:var(--sun)}
+.card{flex:1 1 auto;min-height:0;background:var(--paper);border:3px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink);
+  display:flex;flex-direction:column;overflow:hidden}
+.list{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:8px;margin:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.list li{display:flex;align-items:center;gap:8px;background:var(--soft);border:2px solid var(--ink);border-radius:11px;padding:3px 9px;min-height:38px}
+.list li.me{background:#FFF4C9;box-shadow:0 3px 0 var(--ink)}
+.pos{width:28px;height:28px;flex:0 0 28px;border-radius:50%;display:grid;place-items:center;font-weight:800;border:2px solid var(--ink);background:#fff;font-size:15px}
+.p1{background:#FFD23F}.p2{background:#D5DAEA}.p3{background:#E39B5A}
+.nm{flex:1;min-width:0;font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm small{display:block;font-weight:600;font-size:11px;color:var(--mute);line-height:1}
+.pt{font-weight:800;font-size:19px;white-space:nowrap}
+.pt small{font-size:11px;font-weight:600;color:var(--mute);margin-left:2px}
+.msg{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px;gap:6px}
+.msg b{font-size:19px}.msg span{color:var(--mute);font-weight:600}
+.bot{flex:0 0 auto;display:flex;justify-content:center}
+.play{display:inline-block;text-decoration:none;font-weight:800;font-size:17px;color:var(--ink);background:var(--sun);border:3px solid var(--ink);
+  border-radius:14px;padding:4px 20px;box-shadow:0 4px 0 var(--ink)}
+.play:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.robot{font-size:34px;line-height:1}
+@media (max-width:360px){ .tabs button{font-size:13px;padding:3px 4px} .nm{font-size:15px} }
+</style>
+</head>
+<body>
+<header><div class="logo">Ferralla!</div><div class="sub" id="sub"></div></header>
+<div class="tabs" role="tablist" id="tabs"></div>
+<main class="card" id="card"></main>
+<div class="bot"><a class="play" id="play" href="https://ferralla.vercel.app/" target="_top"></a></div>
+<script>
+const SUPA_URL='https://pmvbllviitutbnoqpnrs.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtdmJsbHZpaXR1dGJub3FwbnJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MTE3NTAsImV4cCI6MjEwNTM4Nzc1MH0.5WMnLv9oY3PXXLjCrxukt6qu2xkNwOvrkbcxYqUrdgo';
+const T={
+ gl:{sub:'Reto diario',hoxe:'Hoxe',semana:'Semana',sempre:'Sempre',play:'Xogar',pts:'pt',empty:'Aínda non xogou ninguén',emptyS:'Sé a primeira persoa en entrar no ranking!',err:'Non se puido cargar o ranking',errS:'Proba de novo nun intre.',load:'Cargando…',you:'ti'},
+ es:{sub:'Reto diario',hoxe:'Hoy',semana:'Semana',sempre:'Siempre',play:'Jugar',pts:'pt',empty:'Todavía no ha jugado nadie',emptyS:'¡Sé la primera persona en entrar en el ranking!',err:'No se pudo cargar el ranking',errS:'Prueba otra vez en un momento.',load:'Cargando…',you:'tú'},
+ ca:{sub:'Repte diari',hoxe:'Avui',semana:'Setmana',sempre:'Sempre',play:'Jugar',pts:'pt',empty:'Encara no hi ha jugat ningú',emptyS:'Sigues la primera persona al rànquing!',err:'No s’ha pogut carregar el rànquing',errS:'Torna-ho a provar d’aquí a una estona.',load:'Carregant…',you:'tu'},
+ eu:{sub:'Eguneko erronka',hoxe:'Gaur',semana:'Astea',sempre:'Beti',play:'Jokatu',pts:'pt',empty:'Oraindik ez du inork jokatu',emptyS:'Izan sailkapenean sartzen den lehena!',err:'Ezin izan da sailkapena kargatu',errS:'Saiatu berriro geroxeago.',load:'Kargatzen…',you:'zu'}};
+const Q=new URLSearchParams(location.search);
+const LANG=T[Q.get('lang')]?Q.get('lang'):'gl', L=T[LANG];
+const N=Math.max(1,Math.min(50,parseInt(Q.get('n'))||10));
+const VIEWS=['hoxe','semana','sempre'];
+const alias={hoy:'hoxe',today:'hoxe',avui:'hoxe',gaur:'hoxe',week:'semana',setmana:'semana',astea:'semana',siempre:'sempre',always:'sempre',beti:'sempre'};
+let view=(()=>{ const p=(Q.get('p')||'').toLowerCase(); return VIEWS.includes(p)?p:(alias[p]||'hoxe'); })();
+document.documentElement.lang=LANG;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function madridDay(offset=0){ const d=new Date(Date.now()+offset*864e5); return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(d); }
+function fmtDay(iso){ const [y,m,d]=iso.split('-'); return d+'/'+m; }
+let me=null; try{ me=localStorage.getItem('ferralla-disp'); }catch(e){}
+$=s=>document.querySelector(s);
+$('#sub').textContent=L.sub; $('#play').textContent=L.play+' ▸';
+function tabs(){ $('#tabs').innerHTML=VIEWS.map(v=>`<button role="tab" data-v="${v}" aria-selected="${v===view}">${L[v]}</button>`).join('');
+  document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{ view=b.dataset.v; tabs(); load(); }); }
+function msg(b,s,icon){ $('#card').innerHTML=`<div class="msg"><div class="robot">${icon||'🤖'}</div><b>${esc(b)}</b>${s?`<span>${esc(s)}</span>`:''}</div>`; }
+let req=0;
+async function load(){ const my=++req; msg(L.load,'','⚙️');
+  const today=madridDay(); let f='';
+  if(view==='hoxe') f=`&dia=eq.${today}`; else if(view==='semana') f=`&dia=gte.${madridDay(-6)}&dia=lte.${today}`;
+  const url=`${SUPA_URL}/rest/v1/fer_reto?select=alcume,puntos,dia,dispositivo,creado${f}&order=puntos.desc,creado.asc&limit=${view==='hoxe'?N:Math.min(1000,N*20)}`;
+  try{ const r=await fetch(url,{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}}); if(!r.ok) throw new Error(r.status);
+    let rows=await r.json(); if(my!==req) return;
+    if(view!=='hoxe'){ const seen=new Set(); rows=rows.filter(x=>{ if(seen.has(x.dispositivo)) return false; seen.add(x.dispositivo); return true; }); }
+    rows=rows.slice(0,N);
+    if(!rows.length){ msg(L.empty,L.emptyS,'🏁'); return; }
+    $('#card').innerHTML=`<ol class="list">${rows.map((x,i)=>`<li class="${x.dispositivo&&x.dispositivo===me?'me':''}"><span class="pos ${i<3?'p'+(i+1):''}">${i+1}</span><span class="nm">${esc(x.alcume)}${x.dispositivo&&x.dispositivo===me?` <small>(${L.you})</small>`:''}${view!=='hoxe'?`<small>${fmtDay(x.dia)}</small>`:''}</span><span class="pt">${x.puntos}<small>${L.pts}</small></span></li>`).join('')}</ol>`;
+  }catch(e){ if(my===req) msg(L.err,L.errS,'🔧'); } }
+tabs(); load();
+</script>
+</body>
+</html>
